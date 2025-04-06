@@ -6,11 +6,15 @@ class ActividadSerializer(serializers.ModelSerializer):
         model = Actividad
         fields = '__all__'
 
+    def validate(self, data):
+        # Validar que la fecha de inicio no sea posterior a la fecha de fin
+        if data['fecha_inicio'] > data['fecha_fin']:
+            raise serializers.ValidationError("La fecha de inicio no puede ser posterior a la fecha de fin.")
+
+        return data
+
 class MantenimientoSerializer(serializers.ModelSerializer):
-    actividades = serializers.PrimaryKeyRelatedField(
-        many=True,  # Indica que es una relación ManyToMany
-        queryset=Actividad.objects.all()  # Valida que los IDs existan en la tabla Actividad
-    )
+    actividades = ActividadSerializer(many=True, read_only=True)
 
     class Meta:
         model = Mantenimiento
