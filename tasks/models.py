@@ -1,13 +1,31 @@
 from django.db import models
 
+class Observacion(models.Model):
+    texto = models.TextField()  # Texto de la observación
+    fecha_creacion = models.DateTimeField(auto_now_add=True)  # Fecha de creación de la observación
+    mantenimiento = models.ForeignKey(
+        'Mantenimiento',
+        related_name='observaciones',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )  # Relación con Mantenimiento
+    actividad = models.ForeignKey(
+        'Actividad',
+        related_name='observaciones',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )  # Relación con Actividad
+
+    def __str__(self):
+        return f"Observación: {self.texto[:30]}..."
+
 class Actividad(models.Model):
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField()
     fecha_inicio = models.DateTimeField(null=True, blank=True)  # Fecha y hora de inicio
     fecha_fin = models.DateTimeField(null=True, blank=True)  # Fecha y hora de fin
-    observaciones = models.TextField(null=True, blank=True)  # Observaciones
-    imagenes = models.ImageField(upload_to='actividades_imagenes/', null=True, blank=True)  # Imagen opcional
-    audios = models.FileField(upload_to='actividades_audios/', null=True, blank=True)  # Audio opcional
 
     def __str__(self):
         return self.nombre
@@ -19,11 +37,8 @@ class Mantenimiento(models.Model):
     fecha_fin = models.DateTimeField(null=True, blank=True)  # Fecha y hora de fin
     estado = models.CharField(max_length=50, default="pendiente")  # Estado del mantenimiento
     responsable = models.CharField(max_length=255)
-    actividades = models.ManyToManyField(Actividad)
+    actividades = models.ManyToManyField(Actividad)  # Relación con actividades
     es_version_original = models.BooleanField(default=False)  # Indica si es la versión original
-    observaciones = models.TextField(null=True, blank=True)  # Observaciones generales
-    imagenes = models.ImageField(upload_to='mantenimientos_imagenes/', null=True, blank=True)  # Imagen opcional
-    audios = models.FileField(upload_to='mantenimientos_audios/', null=True, blank=True)  # Audio opcional
 
     def __str__(self):
         return self.nombre
