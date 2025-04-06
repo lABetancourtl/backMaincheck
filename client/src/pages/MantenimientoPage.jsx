@@ -1,7 +1,7 @@
+import { ListaMantenimiento } from "../components/ListaMantenimiento";
+
 export function MantenimientoPage() {
     return (
-        <div>
-        Mantenimiento Page
-        </div>
+        <ListaMantenimiento />
     );
 }

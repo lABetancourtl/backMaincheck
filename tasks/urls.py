@@ -14,5 +14,5 @@ router.register(r'usuario', views.UsuarioViewSet, basename='usuario')
 # Define urlpatterns
 urlpatterns = [
     path('api/v1/', include(router.urls)),  # Incluye las rutas del DefaultRouter
-   
+    path('api/v1/mantenimientos/cargar/', views.CargarMantenimientosView.as_view(), name='cargar_mantenimientos'),  # Nueva ruta para cargar mantenimientos
 ]
