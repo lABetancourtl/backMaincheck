@@ -26,6 +26,58 @@ export function MantenimientoCard({
         }
     }, [observaciones, observacionesMantenimiento]);
 
+    // Función para registrar el inicio de una actividad
+    const registrarInicioActividad = async (actividadId) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`http://localhost:8000/tasks/api/v1/actividades/${actividadId}/inicio-fin/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fecha_inicio: new Date().toISOString() }),
+            });
+            if (response.ok) {
+                alert('Inicio de la actividad registrado correctamente.');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al registrar el inicio de la actividad.');
+            }
+        } catch (error) {
+            console.error('Error al registrar el inicio de la actividad:', error);
+            setError(error.message);
+            alert(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Función para registrar el fin de una actividad
+    const registrarFinActividad = async (actividadId) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`http://localhost:8000/tasks/api/v1/actividades/${actividadId}/inicio-fin/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fecha_fin: new Date().toISOString() }),
+            });
+            if (response.ok) {
+                alert('Fin de la actividad registrado correctamente.');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al registrar el fin de la actividad.');
+            }
+        } catch (error) {
+            console.error('Error al registrar el fin de la actividad:', error);
+            setError(error.message);
+            alert(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const registrarInicio = async () => {
         try {
             setLoading(true);
@@ -208,6 +260,12 @@ export function MantenimientoCard({
                 <p>Descripción: {actividad.descripcion}</p>
                 <p>Fecha de inicio proyectada: {actividad.fecha_inicio ? new Date(actividad.fecha_inicio).toLocaleString() : "No registrada"}</p>
                 <p>Fecha de fin proyectada: {actividad.fecha_fin ? new Date(actividad.fecha_fin).toLocaleString() : "No registrada"}</p>
+                <button onClick={() => registrarInicioActividad(actividad.id)} disabled={loading}>
+                    Registrar Inicio de la Actividad
+                </button>
+                <button onClick={() => registrarFinActividad(actividad.id)} disabled={loading}>
+                    Registrar Fin de la Actividad
+                </button>
                 <h4>Observaciones:</h4>
                 <ul>
                     {actividad.observaciones?.map((obs) => (
@@ -216,17 +274,15 @@ export function MantenimientoCard({
                                 <>
                                     <input
                                         type="text"
-                                        value={textoEditable} // Vincula el input al estado temporal
-                                        onChange={(e) => setTextoEditable(e.target.value)} // Actualiza el estado temporal
+                                        value={textoEditable}
+                                        onChange={(e) => setTextoEditable(e.target.value)}
                                     />
-                                    <button onClick={() => {
-                                        editarObservacionActividad(actividad.id, obs.id, textoEditable); // Usa el estado temporal para guardar
-                                    }}>
+                                    <button onClick={() => editarObservacionActividad(actividad.id, obs.id, textoEditable)}>
                                         Guardar
                                     </button>
                                     <button onClick={() => {
                                         setEditandoObservacionActividad({ actividadId: null, observacionId: null });
-                                        setTextoEditable(''); // Limpia el estado temporal al cancelar
+                                        setTextoEditable('');
                                     }}>
                                         Cancelar
                                     </button>
@@ -236,7 +292,7 @@ export function MantenimientoCard({
                                     {obs.texto}
                                     <button onClick={() => {
                                         setEditandoObservacionActividad({ actividadId: actividad.id, observacionId: obs.id });
-                                        setTextoEditable(obs.texto); // Inicializa el estado temporal con el texto actual
+                                        setTextoEditable(obs.texto);
                                     }}>
                                         Editar
                                     </button>
