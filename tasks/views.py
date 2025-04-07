@@ -11,6 +11,10 @@ class MantenimientoViewSet(viewsets.ModelViewSet):
     queryset = Mantenimiento.objects.all()
     serializer_class = MantenimientoSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        return context
+
 class CargarMantenimientosView(APIView):
     def post(self, request):
         try:
@@ -20,25 +24,56 @@ class CargarMantenimientosView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            mantenimientos_creados = []
             errores = []
-            for mantenimiento_data in request.data:
-                serializer = MantenimientoSerializer(data=mantenimiento_data)
-                if serializer.is_valid():
-                    serializer.save()
-                else:
-                    errores.append(serializer.errors)
+
+            for index, mantenimiento_data in enumerate(request.data):
+                try:
+                    serializer = MantenimientoSerializer(data=mantenimiento_data)
+                    
+                    if serializer.is_valid():
+                        try:
+                            mantenimiento = serializer.save()
+                            mantenimientos_creados.append(serializer.data)
+                        except Exception as save_error:
+                            errores.append({
+                                "indice": index,
+                                "error": f"Error al guardar: {str(save_error)}",
+                                "data": mantenimiento_data
+                            })
+                    else:
+                        errores.append({
+                            "indice": index,
+                            "error": serializer.errors,
+                            "data": mantenimiento_data
+                        })
+                except Exception as item_error:
+                    errores.append({
+                        "indice": index,
+                        "error": str(item_error),
+                        "data": mantenimiento_data
+                    })
 
             if errores:
-                return Response({"errores": errores}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "message": "Algunos mantenimientos no se pudieron cargar.",
+                    "mantenimientos_creados": mantenimientos_creados,
+                    "errores": errores
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"message": "Mantenimientos cargados exitosamente."}, status=status.HTTP_201_CREATED)
+            return Response({
+                "message": "Todos los mantenimientos se cargaron correctamente.",
+                "mantenimientos_creados": mantenimientos_creados
+            }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response(
-                {"error": "Ocurrió un error inesperado.", "detalle": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
+            import traceback
+            print(traceback.format_exc())
+            return Response({
+                "error": "Error inesperado al cargar mantenimientos.",
+                "detalle": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class ActividadViewSet(viewsets.ModelViewSet):
     queryset = Actividad.objects.all()
     serializer_class = ActividadSerializer
@@ -69,14 +104,17 @@ class RegistrarInicioFinActividadView(APIView):
         try:
             actividad = Actividad.objects.get(id=actividad_id)
             data = request.data
-            actividad.fecha_inicio = data.get('fecha_inicio', actividad.fecha_inicio)
-            actividad.fecha_fin = data.get('fecha_fin', actividad.fecha_fin)
-            actividad.observaciones = data.get('observaciones', actividad.observaciones)
+
+            # Solo actualizamos fechas de inicio o fin
+            if 'fecha_inicio' in data:
+                actividad.fecha_inicio = data['fecha_inicio']
+            if 'fecha_fin' in data:
+                actividad.fecha_fin = data['fecha_fin']
+            
             actividad.save()
-            return Response({"message": "Actividad actualizada correctamente."}, status=status.HTTP_200_OK)
+            return Response({"message": "Fecha actualizada correctamente."}, status=status.HTTP_200_OK)
         except Actividad.DoesNotExist:
             return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
-
 
 class ObservacionesMantenimientoView(APIView):
     def post(self, request, mantenimiento_id):
@@ -145,3 +183,59 @@ class ObservacionesActividadView(APIView):
             return Response({"error": "Texto de la observación no proporcionado."}, status=status.HTTP_400_BAD_REQUEST)
         except Actividad.DoesNotExist:
             return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        
+class ActividadInicioFinView(APIView):
+    def post(self, request, actividad_id):
+        try:
+            actividad = Actividad.objects.get(id=actividad_id)
+            if 'fecha_inicio' in request.data:
+                actividad.fecha_inicio = request.data['fecha_inicio']
+            if 'fecha_fin' in request.data:
+                actividad.fecha_fin = request.data['fecha_fin']
+            actividad.save()
+            return Response({"message": "Fecha actualizada correctamente."}, status=status.HTTP_200_OK)
+        except Actividad.DoesNotExist:
+            return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class CrearActividadesView(APIView):
+    def post(self, request):
+        try:
+            if not isinstance(request.data, list):
+                return Response(
+                    {"error": "El cuerpo de la solicitud debe ser una lista de actividades."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            actividades_data = request.data
+            actividades_creadas = []
+            errores = []
+
+            for actividad_data in actividades_data:
+                serializer = ActividadSerializer(data=actividad_data)
+                if serializer.is_valid():
+                    actividad = serializer.save()
+                    actividades_creadas.append(serializer.data)
+                else:
+                    errores.append({
+                        "data": actividad_data,
+                        "errors": serializer.errors
+                    })
+
+            if errores:
+                return Response({
+                    "message": "Algunas actividades no se pudieron crear.",
+                    "actividades_creadas": actividades_creadas,
+                    "errores": errores
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({
+                "message": "Todas las actividades se crearon correctamente.",
+                "actividades_creadas": actividades_creadas
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {"error": "Error inesperado al crear actividades.", "detalle": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
