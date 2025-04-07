@@ -5,8 +5,9 @@ from tasks import views
 from .views import (
     RegistrarInicioFinMantenimientoView, 
     RegistrarInicioFinActividadView, 
-    ObservacionesMantenimientoView, 
-    ObservacionesActividadView
+    ObservacionMantenimientoView, 
+    ObservacionActividadView,
+    ObservacionDetailView
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -30,21 +31,29 @@ urlpatterns = [
     path('api/v1/mantenimientos/<int:mantenimiento_id>/inicio-fin/', 
          RegistrarInicioFinMantenimientoView.as_view(), 
          name='registrar_inicio_fin_mantenimiento'),
-    path('api/v1/mantenimientos/<int:mantenimiento_id>/observaciones/', 
-         ObservacionesMantenimientoView.as_view(), 
-         name='observaciones_mantenimiento'),
     
     # Rutas para actividades
     path('api/v1/actividades/<int:actividad_id>/inicio-fin/', 
          RegistrarInicioFinActividadView.as_view(), 
          name='registrar_inicio_fin_actividad'),
-    path('api/v1/actividades/<int:actividad_id>/observaciones/', 
-         ObservacionesActividadView.as_view(), 
-         name='observaciones_actividad'),
 
     path('api/v1/actividades/crear/', 
          views.CrearActividadesView.as_view(), 
          name='crear_actividades'),
+     
+    # Rutas para observaciones
+    path('api/v1/mantenimientos/<int:mantenimiento_id>/observaciones/', 
+         ObservacionMantenimientoView.as_view(), 
+         name='observaciones_mantenimiento'),
+    path('api/v1/actividades/<int:actividad_id>/observaciones/', 
+         ObservacionActividadView.as_view(), 
+         name='agregar_observacion_actividad'),  # Ruta para agregar observaciones
+    path('api/v1/actividades/<int:actividad_id>/observaciones/<int:observacion_id>/', 
+         ObservacionActividadView.as_view(), 
+         name='editar_observacion_actividad'),  # Ruta para editar observaciones
+    path('api/v1/observaciones/<int:observacion_id>/', 
+         ObservacionDetailView.as_view(), 
+         name='editar_observacion'),
 ]
 
 # Configuración para archivos media en modo debug

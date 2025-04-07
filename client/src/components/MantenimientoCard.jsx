@@ -13,8 +13,18 @@ export function MantenimientoCard({
 }) {
     const [nuevaObservacionMantenimiento, setNuevaObservacionMantenimiento] = useState('');
     const [observacionesActividades, setObservacionesActividades] = useState({});
+    const [observacionesMantenimiento, setObservacionesMantenimiento] = useState([]);
+    const [editandoObservacion, setEditandoObservacion] = useState(null);
+    const [editandoObservacionActividad, setEditandoObservacionActividad] = useState({ actividadId: null, observacionId: null });
+    const [textoEditable, setTextoEditable] = useState(''); // Estado temporal para el texto editable
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (observacionesMantenimiento.length === 0 && observaciones.length > 0) {
+            setObservacionesMantenimiento(observaciones);
+        }
+    }, [observaciones, observacionesMantenimiento]);
 
     const registrarInicio = async () => {
         try {
@@ -66,64 +76,6 @@ export function MantenimientoCard({
         }
     };
 
-    const registrarInicioActividad = async (actividadId) => {
-        if (!actividadId) {
-            alert('ID de actividad no válido');
-            return;
-        }
-        try {
-            setLoading(true);
-            const response = await fetch(`http://localhost:8000/tasks/api/v1/actividades/${actividadId}/inicio-fin/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ fecha_inicio: new Date().toISOString() }),
-            });
-            if (response.ok) {
-                alert(`Inicio de la actividad ${actividadId} registrado correctamente.`);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error al registrar el inicio de la actividad ${actividadId}.`);
-            }
-        } catch (error) {
-            console.error('Error al registrar el inicio de la actividad:', error);
-            setError(error.message);
-            alert(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const registrarFinActividad = async (actividadId) => {
-        if (!actividadId) {
-            alert('ID de actividad no válido');
-            return;
-        }
-        try {
-            setLoading(true);
-            const response = await fetch(`http://localhost:8000/tasks/api/v1/actividades/${actividadId}/inicio-fin/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ fecha_fin: new Date().toISOString() }),
-            });
-            if (response.ok) {
-                alert(`Fin de la actividad ${actividadId} registrado correctamente.`);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Error al registrar el fin de la actividad ${actividadId}.`);
-            }
-        } catch (error) {
-            console.error('Error al registrar el fin de la actividad:', error);
-            setError(error.message);
-            alert(error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const agregarObservacionMantenimiento = async () => {
         if (!nuevaObservacionMantenimiento.trim()) {
             alert('La observación no puede estar vacía');
@@ -140,7 +92,8 @@ export function MantenimientoCard({
             });
 
             if (response.ok) {
-                alert('Observación agregada correctamente.');
+                const nuevaObservacion = await response.json();
+                setObservacionesMantenimiento([...observacionesMantenimiento, nuevaObservacion]);
                 setNuevaObservacionMantenimiento('');
             } else {
                 const errorData = await response.json();
@@ -150,6 +103,34 @@ export function MantenimientoCard({
             console.error('Error al agregar la observación:', error);
             setError(error.message);
             alert(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const editarObservacionMantenimiento = async (observacionId, nuevoTexto) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`http://localhost:8000/tasks/api/v1/observaciones/${observacionId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ texto: nuevoTexto }),
+            });
+
+            if (response.ok) {
+                const observacionActualizada = await response.json();
+                setObservacionesMantenimiento(prevObs =>
+                    prevObs.map(obs => obs.id === observacionId ? observacionActualizada : obs)
+                );
+                setEditandoObservacion(null);
+            } else {
+                throw new Error('Error al editar la observación.');
+            }
+        } catch (error) {
+            console.error('Error al editar la observación:', error);
+            setError(error.message);
         } finally {
             setLoading(false);
         }
@@ -170,30 +151,54 @@ export function MantenimientoCard({
                 },
                 body: JSON.stringify({ texto: nuevaObservacion }),
             });
-
+    
             if (response.ok) {
-                alert(`Observación agregada correctamente a la actividad ${actividadId}.`);
-                setObservacionesActividades((prev) => ({ ...prev, [actividadId]: '' }));
+                const observacionCreada = await response.json();
+                setObservacionesActividades(prev => ({
+                    ...prev,
+                    [actividadId]: '',
+                }));
+                alert('Observación agregada correctamente.');
             } else {
                 const errorData = await response.json();
-                throw new Error(errorData.error || `Error al agregar la observación a la actividad ${actividadId}.`);
+                throw new Error(errorData.error || 'Error al agregar la observación.');
             }
         } catch (error) {
             console.error('Error al agregar la observación:', error);
             setError(error.message);
-            alert(error.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleObservacionActividadChange = (actividadId, value) => {
-        setObservacionesActividades((prev) => ({ ...prev, [actividadId]: value }));
+    const editarObservacionActividad = async (actividadId, observacionId, nuevoTexto) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`http://localhost:8000/tasks/api/v1/actividades/${actividadId}/observaciones/${observacionId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ texto: nuevoTexto }),
+            });
+    
+            if (response.ok) {
+                alert('Observación editada correctamente.');
+                setEditandoObservacionActividad({ actividadId: null, observacionId: null });
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al editar la observación.');
+            }
+        } catch (error) {
+            console.error('Error al editar la observación:', error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
     };
-
+    
     const renderActividades = () => {
         if (!actividades || !Array.isArray(actividades)) {
-            console.log('No hay actividades o no es un array:', actividades);
             return <p>No hay actividades disponibles</p>;
         }
 
@@ -203,34 +208,50 @@ export function MantenimientoCard({
                 <p>Descripción: {actividad.descripcion}</p>
                 <p>Fecha de inicio proyectada: {actividad.fecha_inicio ? new Date(actividad.fecha_inicio).toLocaleString() : "No registrada"}</p>
                 <p>Fecha de fin proyectada: {actividad.fecha_fin ? new Date(actividad.fecha_fin).toLocaleString() : "No registrada"}</p>
-                <button 
-                    onClick={() => registrarInicioActividad(actividad.id)}
-                    disabled={loading}
-                >
-                    Registrar Inicio de Actividad
-                </button>
-                <button 
-                    onClick={() => registrarFinActividad(actividad.id)}
-                    disabled={loading}
-                >
-                    Registrar Fin de Actividad
-                </button>
                 <h4>Observaciones:</h4>
                 <ul>
-                    {actividad.observaciones?.map((obs, index) => (
-                        <li key={index}>{obs.texto}</li>
-                    )) || <li>No hay observaciones</li>}
+                    {actividad.observaciones?.map((obs) => (
+                        <li key={obs.id}>
+                            {editandoObservacionActividad.actividadId === actividad.id && editandoObservacionActividad.observacionId === obs.id ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        value={textoEditable} // Vincula el input al estado temporal
+                                        onChange={(e) => setTextoEditable(e.target.value)} // Actualiza el estado temporal
+                                    />
+                                    <button onClick={() => {
+                                        editarObservacionActividad(actividad.id, obs.id, textoEditable); // Usa el estado temporal para guardar
+                                    }}>
+                                        Guardar
+                                    </button>
+                                    <button onClick={() => {
+                                        setEditandoObservacionActividad({ actividadId: null, observacionId: null });
+                                        setTextoEditable(''); // Limpia el estado temporal al cancelar
+                                    }}>
+                                        Cancelar
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    {obs.texto}
+                                    <button onClick={() => {
+                                        setEditandoObservacionActividad({ actividadId: actividad.id, observacionId: obs.id });
+                                        setTextoEditable(obs.texto); // Inicializa el estado temporal con el texto actual
+                                    }}>
+                                        Editar
+                                    </button>
+                                </>
+                            )}
+                        </li>
+                    ))}
                 </ul>
                 <textarea
                     value={observacionesActividades[actividad.id] || ''}
-                    onChange={(e) => handleObservacionActividadChange(actividad.id, e.target.value)}
+                    onChange={(e) => setObservacionesActividades(prev => ({ ...prev, [actividad.id]: e.target.value }))}
                     placeholder="Agregar nueva observación"
                     disabled={loading}
                 />
-                <button 
-                    onClick={() => agregarObservacionActividad(actividad.id)}
-                    disabled={loading}
-                >
+                <button onClick={() => agregarObservacionActividad(actividad.id)} disabled={loading}>
                     Agregar Observación
                 </button>
             </li>
@@ -254,9 +275,30 @@ export function MantenimientoCard({
             </button>
             <h3>Observaciones del Mantenimiento:</h3>
             <ul>
-                {observaciones?.map((obs, index) => (
-                    <li key={index}>{obs.texto}</li>
-                )) || <li>No hay observaciones</li>}
+                {observacionesMantenimiento.map(obs => (
+                    <li key={obs.id}>
+                        {editandoObservacion === obs.id ? (
+                            <>
+                                <input
+                                    type="text"
+                                    value={obs.texto}
+                                    onChange={(e) =>
+                                        setObservacionesMantenimiento(prev =>
+                                            prev.map(o => o.id === obs.id ? { ...o, texto: e.target.value } : o)
+                                        )
+                                    }
+                                />
+                                <button onClick={() => editarObservacionMantenimiento(obs.id, obs.texto)}>Guardar</button>
+                                <button onClick={() => setEditandoObservacion(null)}>Cancelar</button>
+                            </>
+                        ) : (
+                            <>
+                                {obs.texto}
+                                <button onClick={() => setEditandoObservacion(obs.id)}>Editar</button>
+                            </>
+                        )}
+                    </li>
+                ))}
             </ul>
             <textarea
                 value={nuevaObservacionMantenimiento}

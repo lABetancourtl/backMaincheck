@@ -1,25 +1,10 @@
 from django.db import models
 
 class Observacion(models.Model):
-    texto = models.TextField()  # Texto de la observación
-    fecha_creacion = models.DateTimeField(auto_now_add=True)  # Fecha de creación de la observación
-    mantenimiento = models.ForeignKey(
-        'Mantenimiento',
-        related_name='observaciones',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )  # Relación con Mantenimiento
-    actividad = models.ForeignKey(
-        'Actividad',
-        related_name='observaciones',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )  # Relación con Actividad
-
-    def __str__(self):
-        return f"Observación: {self.texto[:30]}..."
+    texto = models.TextField()
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    mantenimiento = models.ForeignKey('Mantenimiento', on_delete=models.CASCADE, null=True, blank=True, related_name='observaciones')
+    actividad = models.ForeignKey('Actividad', on_delete=models.CASCADE, null=True, blank=True, related_name='observaciones')
 
 class Actividad(models.Model):
     nombre = models.CharField(max_length=255)

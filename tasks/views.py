@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from .models import Mantenimiento, Actividad, Usuario, Observacion
-from .serializer import MantenimientoSerializer, ActividadSerializer, UsuarioSerializer
+from .serializer import MantenimientoSerializer, ActividadSerializer, UsuarioSerializer,ObservacionSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -116,74 +116,6 @@ class RegistrarInicioFinActividadView(APIView):
         except Actividad.DoesNotExist:
             return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-class ObservacionesMantenimientoView(APIView):
-    def post(self, request, mantenimiento_id):
-        try:
-            mantenimiento = Mantenimiento.objects.get(id=mantenimiento_id)
-            observaciones = request.data.get('observaciones', '')
-            imagen = request.FILES.get('imagenes')
-            audio = request.FILES.get('audios')
-
-            # Actualizar las observaciones
-            mantenimiento.observaciones = observaciones
-
-            # Guardar archivos si se proporcionan
-            if imagen:
-                mantenimiento.imagenes = imagen
-            if audio:
-                mantenimiento.audios = audio
-
-            mantenimiento.save()
-            return Response({"message": "Observación registrada correctamente."}, status=status.HTTP_200_OK)
-        except Mantenimiento.DoesNotExist:
-            return Response({"error": "Mantenimiento no encontrado."}, status=status.HTTP_404_NOT_FOUND)
-        
-class ObservacionesActividadView(APIView):
-    def post(self, request, actividad_id):
-        try:
-            actividad = Actividad.objects.get(id=actividad_id)
-            observaciones = request.data.get('observaciones', '')
-            imagen = request.FILES.get('imagenes')
-            audio = request.FILES.get('audios')
-
-            # Actualizar las observaciones
-            actividad.observaciones = observaciones
-
-            # Guardar archivos si se proporcionan
-            if imagen:
-                actividad.imagenes = imagen
-            if audio:
-                actividad.audios = audio
-
-            actividad.save()
-            return Response({"message": "Observación registrada correctamente."}, status=status.HTTP_200_OK)
-        except Actividad.DoesNotExist:
-            return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        
-class ObservacionesMantenimientoView(APIView):
-    def post(self, request, mantenimiento_id):
-        try:
-            mantenimiento = Mantenimiento.objects.get(id=mantenimiento_id)
-            texto = request.data.get('texto')
-            if texto:
-                Observacion.objects.create(mantenimiento=mantenimiento, texto=texto)
-                return Response({"message": "Observación agregada correctamente."}, status=status.HTTP_201_CREATED)
-            return Response({"error": "Texto de la observación no proporcionado."}, status=status.HTTP_400_BAD_REQUEST)
-        except Mantenimiento.DoesNotExist:
-            return Response({"error": "Mantenimiento no encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
-class ObservacionesActividadView(APIView):
-    def post(self, request, actividad_id):
-        try:
-            actividad = Actividad.objects.get(id=actividad_id)
-            texto = request.data.get('texto')
-            if texto:
-                Observacion.objects.create(actividad=actividad, texto=texto)
-                return Response({"message": "Observación agregada correctamente."}, status=status.HTTP_201_CREATED)
-            return Response({"error": "Texto de la observación no proporcionado."}, status=status.HTTP_400_BAD_REQUEST)
-        except Actividad.DoesNotExist:
-            return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        
 class ActividadInicioFinView(APIView):
     def post(self, request, actividad_id):
         try:
@@ -239,3 +171,55 @@ class CrearActividadesView(APIView):
                 {"error": "Error inesperado al crear actividades.", "detalle": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class ObservacionMantenimientoView(APIView):
+    def post(self, request, mantenimiento_id):
+        try:
+            mantenimiento = Mantenimiento.objects.get(id=mantenimiento_id)
+            texto = request.data.get('texto')
+            if texto:
+                observacion = Observacion.objects.create(mantenimiento=mantenimiento, texto=texto)
+                serializer = ObservacionSerializer(observacion)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"error": "Texto de la observación no proporcionado."}, status=status.HTTP_400_BAD_REQUEST)
+        except Mantenimiento.DoesNotExist:
+            return Response({"error": "Mantenimiento no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+class ObservacionActividadView(APIView):
+    def post(self, request, actividad_id):
+        try:
+            actividad = Actividad.objects.get(id=actividad_id)
+            texto = request.data.get('texto')
+            if texto:
+                observacion = Observacion.objects.create(actividad=actividad, texto=texto)
+                serializer = ObservacionSerializer(observacion)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"error": "Texto de la observación no proporcionado."}, status=status.HTTP_400_BAD_REQUEST)
+        except Actividad.DoesNotExist:
+            return Response({"error": "Actividad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, actividad_id, observacion_id):
+        try:
+            observacion = Observacion.objects.get(id=observacion_id, actividad_id=actividad_id)
+            texto = request.data.get('texto')
+            if not texto:
+                return Response({"error": "El texto no puede estar vacío."}, status=status.HTTP_400_BAD_REQUEST)
+            observacion.texto = texto
+            observacion.save()
+            serializer = ObservacionSerializer(observacion)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Observacion.DoesNotExist:
+            return Response({"error": "Observación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+class ObservacionDetailView(APIView):
+    def put(self, request, observacion_id):
+        try:
+            observacion = Observacion.objects.get(id=observacion_id)
+            texto = request.data.get('texto')
+            if not texto:
+                return Response({"error": "El texto no puede estar vacío."}, status=status.HTTP_400_BAD_REQUEST)
+            observacion.texto = texto
+            observacion.save()
+            serializer = ObservacionSerializer(observacion)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Observacion.DoesNotExist:
+            return Response({"error": "Observación no encontrada."}, status=status.HTTP_404_NOT_FOUND)

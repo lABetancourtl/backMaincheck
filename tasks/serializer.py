@@ -1,19 +1,18 @@
 from rest_framework import serializers
 from .models import Mantenimiento, Actividad, Usuario, Observacion
+from datetime import datetime
 
 class ObservacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Observacion
         fields = ['id', 'texto', 'fecha_creacion']
 
-from rest_framework import serializers
-from .models import Mantenimiento, Actividad
-from datetime import datetime
-
 class ActividadSerializer(serializers.ModelSerializer):
+    observaciones = ObservacionSerializer(many=True, read_only=True)  # Incluir observaciones en actividades
+
     class Meta:
         model = Actividad
-        fields = ['id', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_fin']
+        fields = ['id', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_fin', 'observaciones']
 
     def validate(self, data):
         # Validar que las fechas sean válidas
@@ -39,11 +38,12 @@ class ActividadSerializer(serializers.ModelSerializer):
 
 class MantenimientoSerializer(serializers.ModelSerializer):
     actividades = ActividadSerializer(many=True, read_only=True)
-    
+    observaciones = ObservacionSerializer(many=True, read_only=True)  # Incluir observaciones en mantenimientos
+
     class Meta:
         model = Mantenimiento
         fields = ['id', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_fin', 
-                 'estado', 'responsable', 'actividades']
+                  'estado', 'responsable', 'actividades', 'observaciones']
 
     def validate(self, data):
         # Validar formato de fechas y que inicio sea anterior a fin
