@@ -1,0 +1,57 @@
+.mantenimiento-card {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+}
+
+.mantenimiento-card h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.mantenimiento-card button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #fff;
+}
+
+.mantenimiento-card .inicio-button {
+    background-color: #4CAF50;
+    margin-right: 10px;
+}
+
+.mantenimiento-card .fin-button {
+    background-color: #f44336;
+}
+
+.mantenimiento-card .error-message {
+    color: red;
+    margin: 10px 0;
+}
+
+.mantenimiento-card input,
+.mantenimiento-card textarea {
+    padding: 5px;
+    margin-right: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.mantenimiento-card .guardar-button {
+    background-color: #4CAF50;
+    margin-right: 5px;
+}
+
+.mantenimiento-card .cancelar-button {
+    background-color: #f44336;
+}
+
+.mantenimiento-card .editar-button {
+    margin-left: 10px;
+    background-color: #2196F3;
+}

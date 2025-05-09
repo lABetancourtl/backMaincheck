@@ -1,3 +1,4 @@
+import '../App.css';
 import { useState, useEffect } from 'react';
 
 export function MantenimientoCard({ 
@@ -16,7 +17,7 @@ export function MantenimientoCard({
     const [observacionesMantenimiento, setObservacionesMantenimiento] = useState([]);
     const [editandoObservacion, setEditandoObservacion] = useState(null);
     const [editandoObservacionActividad, setEditandoObservacionActividad] = useState({ actividadId: null, observacionId: null });
-    const [textoEditable, setTextoEditable] = useState(''); // Estado temporal para el texto editable
+    const [textoEditable, setTextoEditable] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -26,7 +27,6 @@ export function MantenimientoCard({
         }
     }, [observaciones, observacionesMantenimiento]);
 
-    // Función para registrar el inicio de una actividad
     const registrarInicioActividad = async (actividadId) => {
         try {
             setLoading(true);
@@ -52,7 +52,6 @@ export function MantenimientoCard({
         }
     };
 
-    // Función para registrar el fin de una actividad
     const registrarFinActividad = async (actividadId) => {
         try {
             setLoading(true);
@@ -260,10 +259,10 @@ export function MantenimientoCard({
                 <p>Descripción: {actividad.descripcion}</p>
                 <p>Fecha de inicio : {actividad.fecha_inicio ? new Date(actividad.fecha_inicio).toLocaleString() : "No registrada"}</p>
                 <p>Fecha de fin : {actividad.fecha_fin ? new Date(actividad.fecha_fin).toLocaleString() : "No registrada"}</p>
-                <button onClick={() => registrarInicioActividad(actividad.id)} disabled={loading}>
+                <button onClick={() => registrarInicioActividad(actividad.id)} disabled={loading} className="inicio-button">
                     Registrar Inicio de la Actividad
                 </button>
-                <button onClick={() => registrarFinActividad(actividad.id)} disabled={loading}>
+                <button onClick={() => registrarFinActividad(actividad.id)} disabled={loading} className="fin-button">
                     Registrar Fin de la Actividad
                 </button>
                 <h4>Observaciones:</h4>
@@ -277,13 +276,13 @@ export function MantenimientoCard({
                                         value={textoEditable}
                                         onChange={(e) => setTextoEditable(e.target.value)}
                                     />
-                                    <button onClick={() => editarObservacionActividad(actividad.id, obs.id, textoEditable)}>
+                                    <button onClick={() => editarObservacionActividad(actividad.id, obs.id, textoEditable)} className="guardar-button">
                                         Guardar
                                     </button>
                                     <button onClick={() => {
                                         setEditandoObservacionActividad({ actividadId: null, observacionId: null });
                                         setTextoEditable('');
-                                    }}>
+                                    }} className="cancelar-button">
                                         Cancelar
                                     </button>
                                 </>
@@ -293,7 +292,7 @@ export function MantenimientoCard({
                                     <button onClick={() => {
                                         setEditandoObservacionActividad({ actividadId: actividad.id, observacionId: obs.id });
                                         setTextoEditable(obs.texto);
-                                    }}>
+                                    }} className="editar-button">
                                         Editar
                                     </button>
                                 </>
@@ -303,7 +302,7 @@ export function MantenimientoCard({
                 </ul>
                 <textarea
                     value={observacionesActividades[actividad.id] || ''}
-                    onChange={(e) => setObservacionesActividades(prev => ({ ...prev, [actividad.id]: e.target.value }))}
+                    onChange={(e) => setObservacionesActividades(prev => ({ ...prev, [actividadId]: e.target.value }))}
                     placeholder="Agregar nueva observación"
                     disabled={loading}
                 />
@@ -315,58 +314,26 @@ export function MantenimientoCard({
     };
 
     return (
-        <div
-            style={{
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                minHeight: '100vh',
-                padding: '20px',
-                color: '#fff', // Texto blanco para contraste
-            }}
-        >
-            {error && <div style={{ color: 'red', margin: '10px 0' }}>{error}</div>}
-            <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>{nombre}</h1>
+        <div className="mantenimiento-card">
+            {error && <div className="error-message">{error}</div>}
+            <h1>{nombre}</h1>
             <p>{descripcion}</p>
             <p>Fecha de inicio : {fecha_inicio ? new Date(fecha_inicio).toLocaleString() : "No registrada"}</p>
             <p>Fecha de fin : {fecha_fin ? new Date(fecha_fin).toLocaleString() : "No registrada"}</p>
             <p>Estado: {estado}</p>
             <p>Responsable: {responsable}</p>
-            <div style={{ marginBottom: '20px' }}>
-                <button
-                    onClick={registrarInicio}
-                    disabled={loading}
-                    style={{
-                        marginRight: '10px',
-                        padding: '10px 20px',
-                        backgroundColor: '#4CAF50',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                    }}
-                >
+            <div>
+                <button onClick={registrarInicio} disabled={loading} className="inicio-button">
                     Registrar Inicio del Mantenimiento
                 </button>
-                <button
-                    onClick={registrarFin}
-                    disabled={loading}
-                    style={{
-                        padding: '10px 20px',
-                        backgroundColor: '#f44336',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                    }}
-                >
+                <button onClick={registrarFin} disabled={loading} className="fin-button">
                     Registrar Fin del Mantenimiento
                 </button>
             </div>
             <h3>Observaciones del Mantenimiento:</h3>
             <ul>
                 {observacionesMantenimiento.map(obs => (
-                    <li key={obs.id} style={{ marginBottom: '10px' }}>
+                    <li key={obs.id}>
                         {editandoObservacion === obs.id ? (
                             <>
                                 <input
@@ -377,56 +344,18 @@ export function MantenimientoCard({
                                             prev.map(o => o.id === obs.id ? { ...o, texto: e.target.value } : o)
                                         )
                                     }
-                                    style={{
-                                        padding: '5px',
-                                        marginRight: '10px',
-                                        borderRadius: '5px',
-                                        border: '1px solid #ccc',
-                                    }}
                                 />
-                                <button
-                                    onClick={() => editarObservacionMantenimiento(obs.id, obs.texto)}
-                                    style={{
-                                        padding: '5px 10px',
-                                        backgroundColor: '#4CAF50',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        cursor: 'pointer',
-                                        marginRight: '5px',
-                                    }}
-                                >
+                                <button onClick={() => editarObservacionMantenimiento(obs.id, obs.texto)} className="guardar-button">
                                     Guardar
                                 </button>
-                                <button
-                                    onClick={() => setEditandoObservacion(null)}
-                                    style={{
-                                        padding: '5px 10px',
-                                        backgroundColor: '#f44336',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        cursor: 'pointer',
-                                    }}
-                                >
+                                <button onClick={() => setEditandoObservacion(null)} className="cancelar-button">
                                     Cancelar
                                 </button>
                             </>
                         ) : (
                             <>
                                 {obs.texto}
-                                <button
-                                    onClick={() => setEditandoObservacion(obs.id)}
-                                    style={{
-                                        marginLeft: '10px',
-                                        padding: '5px 10px',
-                                        backgroundColor: '#2196F3',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        cursor: 'pointer',
-                                    }}
-                                >
+                                <button onClick={() => setEditandoObservacion(obs.id)} className="editar-button">
                                     Editar
                                 </button>
                             </>
@@ -439,29 +368,11 @@ export function MantenimientoCard({
                 onChange={(e) => setNuevaObservacionMantenimiento(e.target.value)}
                 placeholder="Agregar nueva observación"
                 disabled={loading}
-                style={{
-                    width: '100%',
-                    padding: '10px',
-                    marginBottom: '10px',
-                    borderRadius: '5px',
-                    border: '1px solid #ccc',
-                }}
             />
-            <button
-                onClick={agregarObservacionMantenimiento}
-                disabled={loading}
-                style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#4CAF50',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                }}
-            >
+            <button onClick={agregarObservacionMantenimiento} disabled={loading}>
                 Agregar Observación
             </button>
-            <h3 style={{ marginTop: '20px' }}>Actividades:</h3>
+            <h3>Actividades:</h3>
             <ul>
                 {renderActividades()}
             </ul>
