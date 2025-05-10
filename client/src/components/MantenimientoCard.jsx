@@ -20,6 +20,9 @@ export function MantenimientoCard({
     const [textoEditable, setTextoEditable] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [actividadExpandida, setActividadExpandida] = useState(null);
+    const [mantenimientoExpandido, setMantenimientoExpandido] = useState(false);
+
 
     useEffect(() => {
         if (observacionesMantenimiento.length === 0 && observaciones.length > 0) {
@@ -248,39 +251,130 @@ export function MantenimientoCard({
         }
     };
     
+    const toggleActividadExpandida = (id) => {
+        setActividadExpandida(prevId => (prevId === id ? null : id));
+    };
+
+    const toggleMantenimientoExpandido = () => {
+        setMantenimientoExpandido(prevState => !prevState);
+    };
+    
+
     const renderActividades = () => {
         if (!actividades || !Array.isArray(actividades)) {
             return <p>No hay actividades disponibles</p>;
         }
 
-        return actividades.map((actividad) => (
-            <li key={actividad.id}>
-                <p>Nombre: {actividad.nombre}</p>
-                <p>Descripción: {actividad.descripcion}</p>
-                <p>Fecha de inicio : {actividad.fecha_inicio ? new Date(actividad.fecha_inicio).toLocaleString() : "No registrada"}</p>
-                <p>Fecha de fin : {actividad.fecha_fin ? new Date(actividad.fecha_fin).toLocaleString() : "No registrada"}</p>
-                <button onClick={() => registrarInicioActividad(actividad.id)} disabled={loading} className="inicio-button">
-                    Registrar Inicio de la Actividad
+        return actividades.map((actividad) => {
+            const estaExpandida = actividadExpandida === actividad.id;
+
+            return (
+                <li key={actividad.id} className="actividad-item">
+                    <div className="actividad-header" onClick={() => toggleActividadExpandida(actividad.id)}>
+                        <strong>{actividad.nombre}</strong>
+                        <span style={{ float: 'right' }}>{estaExpandida ? '▲' : '▼'}</span>
+                    </div>
+
+                    {estaExpandida && (
+                        <div className="actividad-detalles">
+                            <p>Descripción: {actividad.descripcion}</p>
+                            <p>Fecha de inicio: {actividad.fecha_inicio ? new Date(actividad.fecha_inicio).toLocaleString() : "No registrada"}</p>
+                            <p>Fecha de fin: {actividad.fecha_fin ? new Date(actividad.fecha_fin).toLocaleString() : "No registrada"}</p>
+                            <button onClick={() => registrarInicioActividad(actividad.id)} disabled={loading} className="inicio-button">
+                                Registrar Inicio de la Actividad
+                            </button>
+                            <button onClick={() => registrarFinActividad(actividad.id)} disabled={loading} className="fin-button">
+                                Registrar Fin de la Actividad
+                            </button>
+                            <h4>Observaciones:</h4>
+                            <ul>
+                                {actividad.observaciones?.map((obs) => (
+                                    <li key={obs.id}>
+                                        {editandoObservacionActividad.actividadId === actividad.id && editandoObservacionActividad.observacionId === obs.id ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={textoEditable}
+                                                    onChange={(e) => setTextoEditable(e.target.value)}
+                                                />
+                                                <button onClick={() => editarObservacionActividad(actividad.id, obs.id, textoEditable)} className="guardar-button">
+                                                    Guardar
+                                                </button>
+                                                <button onClick={() => {
+                                                    setEditandoObservacionActividad({ actividadId: null, observacionId: null });
+                                                    setTextoEditable('');
+                                                }} className="cancelar-button">
+                                                    Cancelar
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {obs.texto}
+                                                <button onClick={() => {
+                                                    setEditandoObservacionActividad({ actividadId: actividad.id, observacionId: obs.id });
+                                                    setTextoEditable(obs.texto);
+                                                }} className="editar-button">
+                                                    Editar
+                                                </button>
+                                            </>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                            <textarea
+                                value={observacionesActividades[actividad.id] || ''}
+                                onChange={(e) => setObservacionesActividades(prev => ({ ...prev, [actividad.id]: e.target.value }))}
+                                placeholder="Agregar nueva observación"
+                                disabled={loading}
+                            />
+                            <button onClick={() => agregarObservacionActividad(actividad.id)} disabled={loading} className="inicio-button">
+                                Agregar Observación
+                            </button>
+                        </div>
+                    )}
+                </li>
+            );
+        });
+    };
+
+    return (
+        <div className="mantenimiento-card">
+        <h2>
+            <span onClick={toggleMantenimientoExpandido} style={{ cursor: 'pointer' }}>
+                {nombre} {mantenimientoExpandido ? '▲' : '▼'}
+            </span>
+        </h2>
+        {mantenimientoExpandido && (
+            <>
+                <p><strong>Descripción:</strong> {descripcion}</p>
+                <p><strong>Estado:</strong> {estado}</p>
+                <p><strong>Responsable:</strong> {responsable}</p>
+                <p><strong>Fecha de inicio:</strong> {fecha_inicio ? new Date(fecha_inicio).toLocaleString() : "No registrada"}</p>
+                <p><strong>Fecha de fin:</strong> {fecha_fin ? new Date(fecha_fin).toLocaleString() : "No registrada"}</p>
+    
+                <button onClick={registrarInicio} disabled={loading} className="inicio-button">
+                    Registrar Inicio del Mantenimiento
                 </button>
-                <button onClick={() => registrarFinActividad(actividad.id)} disabled={loading} className="fin-button">
-                    Registrar Fin de la Actividad
+                <button onClick={registrarFin} disabled={loading} className="fin-button">
+                    Registrar Fin del Mantenimiento
                 </button>
-                <h4>Observaciones:</h4>
+    
+                <h3>Observaciones del mantenimiento:</h3>
                 <ul>
-                    {actividad.observaciones?.map((obs) => (
+                    {observacionesMantenimiento.map((obs) => (
                         <li key={obs.id}>
-                            {editandoObservacionActividad.actividadId === actividad.id && editandoObservacionActividad.observacionId === obs.id ? (
+                            {editandoObservacion === obs.id ? (
                                 <>
                                     <input
                                         type="text"
                                         value={textoEditable}
                                         onChange={(e) => setTextoEditable(e.target.value)}
                                     />
-                                    <button onClick={() => editarObservacionActividad(actividad.id, obs.id, textoEditable)} className="guardar-button">
+                                    <button onClick={() => editarObservacionMantenimiento(obs.id, textoEditable)} className="guardar-button">
                                         Guardar
                                     </button>
                                     <button onClick={() => {
-                                        setEditandoObservacionActividad({ actividadId: null, observacionId: null });
+                                        setEditandoObservacion(null);
                                         setTextoEditable('');
                                     }} className="cancelar-button">
                                         Cancelar
@@ -290,7 +384,7 @@ export function MantenimientoCard({
                                 <>
                                     {obs.texto}
                                     <button onClick={() => {
-                                        setEditandoObservacionActividad({ actividadId: actividad.id, observacionId: obs.id });
+                                        setEditandoObservacion(obs.id);
                                         setTextoEditable(obs.texto);
                                     }} className="editar-button">
                                         Editar
@@ -300,82 +394,24 @@ export function MantenimientoCard({
                         </li>
                     ))}
                 </ul>
+    
                 <textarea
-                    value={observacionesActividades[actividad.id] || ''}
-                    onChange={(e) => setObservacionesActividades(prev => ({ ...prev, [actividadId]: e.target.value }))}
+                    value={nuevaObservacionMantenimiento}
+                    onChange={(e) => setNuevaObservacionMantenimiento(e.target.value)}
                     placeholder="Agregar nueva observación"
                     disabled={loading}
                 />
-                <button onClick={() => agregarObservacionActividad(actividad.id)} disabled={loading}>
+                <button onClick={agregarObservacionMantenimiento} disabled={loading} className="inicio-button">
                     Agregar Observación
                 </button>
-            </li>
-        ));
-    };
-
-    return (
-        <div className="mantenimiento-card">
-            {error && <div className="error-message">{error}</div>}
-            <h1>{nombre}</h1>
-            <p>{descripcion}</p>
-            <p>Fecha de inicio : {fecha_inicio ? new Date(fecha_inicio).toLocaleString() : "No registrada"}</p>
-            <p>Fecha de fin : {fecha_fin ? new Date(fecha_fin).toLocaleString() : "No registrada"}</p>
-            <p>Estado: {estado}</p>
-            <p>Responsable: {responsable}</p>
-            <div>
-                <button onClick={registrarInicio} disabled={loading} className="inicio-button">
-                    Registrar Inicio del Mantenimiento
-                </button>
-                <button onClick={registrarFin} disabled={loading} className="fin-button">
-                    Registrar Fin del Mantenimiento
-                </button>
-            </div>
-            <h3>Observaciones del Mantenimiento:</h3>
-            <ul>
-                {observacionesMantenimiento.map(obs => (
-                    <li key={obs.id}>
-                        {editandoObservacion === obs.id ? (
-                            <>
-                                <input
-                                    type="text"
-                                    value={obs.texto}
-                                    onChange={(e) =>
-                                        setObservacionesMantenimiento(prev =>
-                                            prev.map(o => o.id === obs.id ? { ...o, texto: e.target.value } : o)
-                                        )
-                                    }
-                                />
-                                <button onClick={() => editarObservacionMantenimiento(obs.id, obs.texto)} className="guardar-button">
-                                    Guardar
-                                </button>
-                                <button onClick={() => setEditandoObservacion(null)} className="cancelar-button">
-                                    Cancelar
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                {obs.texto}
-                                <button onClick={() => setEditandoObservacion(obs.id)} className="editar-button">
-                                    Editar
-                                </button>
-                            </>
-                        )}
-                    </li>
-                ))}
-            </ul>
-            <textarea
-                value={nuevaObservacionMantenimiento}
-                onChange={(e) => setNuevaObservacionMantenimiento(e.target.value)}
-                placeholder="Agregar nueva observación"
-                disabled={loading}
-            />
-            <button onClick={agregarObservacionMantenimiento} disabled={loading}>
-                Agregar Observación
-            </button>
-            <h3>Actividades:</h3>
-            <ul>
-                {renderActividades()}
-            </ul>
-        </div>
+            </>
+        )}
+    
+        <h3>Actividades:</h3>
+        <ul className="actividades-list">
+            {renderActividades()}
+        </ul>
+    </div>
+    
     );
 }
