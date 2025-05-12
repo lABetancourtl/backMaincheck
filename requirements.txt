@@ -5,4 +5,5 @@ gunicorn==21.2.0
 packaging==23.2
 sqlparse==0.4.4
 django-extensions==3.2.3
+djangorestframework==3.14.0
 
