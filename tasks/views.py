@@ -14,7 +14,6 @@ class MantenimientoViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         return context
-
 class CargarMantenimientosView(APIView):
     def post(self, request):
         try:
@@ -72,8 +71,7 @@ class CargarMantenimientosView(APIView):
             return Response({
                 "error": "Error inesperado al cargar mantenimientos.",
                 "detalle": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 class ActividadViewSet(viewsets.ModelViewSet):
     queryset = Actividad.objects.all()
     serializer_class = ActividadSerializer
@@ -186,6 +184,7 @@ class ObservacionMantenimientoView(APIView):
             return Response({"error": "Mantenimiento no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
 class ObservacionActividadView(APIView):
+
     def post(self, request, actividad_id):
         try:
             actividad = Actividad.objects.get(id=actividad_id)
