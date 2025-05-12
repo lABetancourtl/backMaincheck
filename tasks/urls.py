@@ -54,6 +54,10 @@ urlpatterns = [
     path('api/v1/observaciones/<int:observacion_id>/', 
          ObservacionDetailView.as_view(), 
          name='editar_observacion'),
+
+
+
+         
 ]
 
 # Configuración para archivos media en modo debug

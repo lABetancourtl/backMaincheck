@@ -223,3 +223,9 @@ class ObservacionDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Observacion.DoesNotExist:
             return Response({"error": "Observación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+
+
+
